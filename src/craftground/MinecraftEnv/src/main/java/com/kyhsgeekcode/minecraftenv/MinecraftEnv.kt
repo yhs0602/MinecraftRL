@@ -81,6 +81,7 @@ class MinecraftEnv :
     private var entityListener: EntityRenderListenerImpl? = null // tracks the entities rendered in the last tick
     private var resetPhase: ResetPhase = ResetPhase.END_RESET
     private var deathMessageCollector: GetMessagesInterface? = null
+    private lateinit var audioCapturer: AudioCapturer
 
     private val tickSynchronizer = TickSynchronizer()
     private val csvLogger = CsvLogger("java_log.csv", enabled = false, profile = false)
@@ -123,6 +124,14 @@ class MinecraftEnv :
         } catch (e: IOException) {
             throw RuntimeException(e)
         }
+
+        audioCapturer = AudioCapturer()
+        if (audioCapturer.enabled) {
+            println("Audio capture enabled")
+        } else {
+            println("Audio capture disabled")
+        }
+
         skipSync = true
         csvLogger.log("Hello Fabric world!")
         csvLogger.profileStartPrint("Minecraft_env/onInitialize/readInitialEnvironment")
