@@ -91,9 +91,51 @@ createDLPackTensorMetal(id<MTLBuffer> mtlBuffer, size_t width, size_t height) {
     return tensor;
 }
 
-#if USE_CUSTOM_DL_PACK_TENSOR
 PyObject *torchTensorFromDLPack(DLManagedTensor *dlMTensor);
-#endif
+
+DLManagedTensor *
+mtl_dlpack_from_mach_port(unsigned int machPort, int width, int height) {
+    IOSurfaceRef ioSurface = getIOSurfaceFromMachPort((mach_port_t)machPort);
+    if (!ioSurface) {
+        throw std::runtime_error("Failed to initialize IOSurface");
+    }
+
+    id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+    if (!device) {
+        throw std::runtime_error("Failed to create Metal device");
+    }
+
+    // Calculate the length of the buffer
+    size_t iosurface_width = IOSurfaceGetWidth(ioSurface);
+    size_t iosurface_height = IOSurfaceGetHeight(ioSurface);
+    assert(iosurface_width == width);
+    assert(iosurface_height == height);
+    size_t bytesPerRow = IOSurfaceGetBytesPerRow(ioSurface);
+    size_t length = bytesPerRow * height;
+
+    // Create a Metal buffer from the IOSurface
+    id<MTLBuffer> mtlBuffer = [device
+        newBufferWithBytesNoCopy:IOSurfaceGetBaseAddress(ioSurface)
+                          length:length
+                         options:
+                             MTLResourceStorageModeShared // MTLResourceStorageModePrivate
+                     deallocator:^(void *_Nonnull pointer, NSUInteger length) {
+                       // deallocator can be used to free the memory
+                       NSLog(
+                           @"Deallocator called for buffer with pointer: %p, "
+                           @"length: %lu",
+                           pointer,
+                           (unsigned long)length
+                       );
+                     }];
+
+    if (!mtlBuffer) {
+        throw std::runtime_error("Failed to create Metal buffer from IOSurface"
+        );
+    }
+
+    return createDLPackTensorMetal(mtlBuffer, width, height);
+}
 
 py::object
 mtl_tensor_from_mach_port(unsigned int machPort, int width, int height) {

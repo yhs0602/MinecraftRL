@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from datetime import datetime
 
 from enum import Enum
@@ -56,3 +57,27 @@ class CsvLogger:
     def close(self):
         if self.backend in [LogBackend.CSV, LogBackend.BOTH]:
             self.file.close()
+
+    @contextmanager
+    def profile(self, tag):
+        """Context manager for profiling."""
+        if not self.profile:
+            yield
+            return
+
+        time_str = datetime.now().strftime("%H:%M:%S.%f")
+        if self.backend in [LogBackend.CSV, LogBackend.BOTH]:
+            self.file.write(f"{time_str}, start, {tag}\n")
+            self.file.flush()
+        if self.backend in [LogBackend.CONSOLE, LogBackend.BOTH]:
+            print(f"{time_str}: start: {tag}")
+
+        try:
+            yield
+        finally:
+            time_str = datetime.now().strftime("%H:%M:%S.%f")
+            if self.backend in [LogBackend.CONSOLE, LogBackend.BOTH]:
+                print(f"{time_str}: end: {tag}")
+            if self.backend in [LogBackend.CSV, LogBackend.BOTH]:
+                self.file.write(f"{time_str}, end, {tag}\n")
+                self.file.flush()
