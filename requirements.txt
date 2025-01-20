@@ -1,7 +1,7 @@
 cloudpickle==2.2.1
 Farama-Notifications==0.0.4
 gymnasium==0.29.1
-numpy==1.26.0
+numpy==2.2.1
 Pillow==10.0.1
 protobuf==4.24.3
 typing_extensions==4.8.0
