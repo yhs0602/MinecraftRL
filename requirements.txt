@@ -3,5 +3,5 @@ Farama-Notifications==0.0.4
 gymnasium==0.29.1
 numpy==1.26.0
 Pillow==10.0.1
-protobuf==4.24.3
+protobuf==5.29.3
 typing_extensions==4.8.0
